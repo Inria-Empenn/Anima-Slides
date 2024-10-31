@@ -1,0 +1,60 @@
+---
+title: "Anima"
+subtitle: "A C++ library with a set of Python scripts for medical image processing"
+author:
+  - name: A. Stamm
+    affiliation: Department of Mathematics Jean Leray, UMR CNRS 6629, Nantes University, Ecole Centrale de Nantes, France
+    corresponding: true
+    orcid: 0000-0002-8725-3654
+format:
+  revealjs:
+    footer: "Anima Hackathon #1 - Rennes - <aymeric.stamm@cnrs.fr>"
+    slide-number: true
+    logo: images/logo-lmjl.png
+    date: 2024-11-04
+    theme: simple
+date: 2024-11-04
+lightbox: auto
+bibliography: references.bib
+---
+
+# How to write my first ITK filter in [Anima](https://anima.irisa.fr)
+
+![](images/banner_anima.png)
+
+## Overview of tools in Anima
+
+- diffusion
+- filtering
+- math-tools
+- quantitative-mri
+- registration
+- segmentation
+
+## diffusion
+
+## ...
+
+# ITK / Anima Filter
+
+## ITK filter
+
+- GenerateOutputInformation
+- BeforeThreaded
+- DynamicThead
+- AfterThreaded
+
+## Anima filter
+
+# Tuto
+
+## You do
+
+- find suitable location in Anima tree structure
+- create a folder with suitable name: `my_first_tool` (**snakecase convention**)
+- add `add_subdirectory(toto)` at the end of the `CMakeLists.txt` file in the folder where you created the `my_first_tool` folder;
+- inside `my_first_tool`, you will need to create and fill in 3 files:
+
+    - `animaMyFirstTool.cxx` (mind the naming convention). It will call the filter given a set of input arguments and perform what the tool is supposed to do. This is the piece of code that will actually create the binary `animaMyFirstTool` that will be made available for users upon compilation of the code;
+    - `animaMyFirstToolImageFilter.h`
+    - `animaMyFirstToolImageFilter.hxx`
