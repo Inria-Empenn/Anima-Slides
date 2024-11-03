@@ -18,7 +18,6 @@ format:
 date: 2024-11-04
 lightbox: auto
 engine: knitr
-bibliography: references.bib
 ---
 
 # Developing code in [Anima](https://anima.irisa.fr)
@@ -56,7 +55,7 @@ git push --set-upstream origin anima-tuto
 
 # My first tool
 
-## Getting familiar with data IO
+## Getting familiar with data IO {.smaller}
 
 ```{Rcpp}
 #| eval: false
@@ -165,27 +164,34 @@ int main(int argc, char **argv) // <1>
 7. This code shows how to create an image from scratch using a reference image to copy its geometry. First, the pointer is created and initialized. Then regions, spacing, origin and direction informations are copied from the reference image. Finally, the image is allocated in memory and filled with the desired value.
 8. User arguments that have been parsed can be accessed via the *.getValue()* method for the **ValueArg** class and via the *.isSet()* method for the **SwitchArg** class.
 9. To create a vector image, the code is pretty much the same expect that we use the *VectorImageType* image type.
-10. The only subtlety is that now each voxel contains a vector-valued entry which is of type *itk::VariableLengthVector*. Its length can be retrieved from the reference image via the *GetNumberOfComponentsPerPixel()`.
+10. The only subtlety is that now each voxel contains a vector-valued entry which is of type *itk::VariableLengthVector*. Its length can be retrieved from the reference image via the *GetNumberOfComponentsPerPixel()*.
 11. For vector images, there is no *FillBuffer()* method. Instead, one declares an iterator over the whole region of the image and set its value via the *Set()* method at each iterator increment until reaching the end of the image region.
 12. Iterators over images are ITK classes that are found in specific headers that need to be included.
 13. Exit your main program with the *EXIT_SUCCESS* macro if it runs smoothly up to the end.
 
-## Your turn
+## Your turn {.smaller}
 
-1. Copy-paste the previous code in a file that you call `animaDoubleLogPValue.cxx`;
-2. Modify the code in order to receive as input a 3-dimensional scalar image of p-values and return the image with the double logarithm transform of the p-value in it. We recall that this transformation is $\log \left( - \log(p) \right)$;
+1. Copy-paste the previous code in a file that you call *animaDoubleLogPValue.cxx*;
+2. Modify the code in order to receive as input a 3-dimensional scalar image of p-values and return the image with the double logarithm transform of the p-value in it. We recall that this transformation is
+
+$$
+\log \left( - \log(p) \right);
+$$
+
 3. Add an optional argument to provide a mask image so that the transformation is applied only on those voxels for which the mask is set to 1.
 
 ::: {.callout-tip}
-Get inspiration (copy-paste) existing code and modify the minimum to suit your needs!
+Get inspiration from (copy-paste) existing code and modify the minimum to suit your needs!
 :::
 
 ## How to compile this code?
 
+::: {.incremental}
 1. Decide where your tool will end up in the current anima source code tree;
 2. Go there and create a dedicated folder with the name of the tool **without the anima prefix** and using **snake_case** formatting (e.g. `double_log_pvalue`);
 3. At this same location, edit the `CMakeLists.txt` file by adding `add_subdirectory(double_log_pvalue)`. This tells `cmake` to add the subdirectory for compilation;
 4. Put the file you wrote (`animaDoubleLogPValue.cxx`) in the `double_log_pvalue` folder.
+:::
 
 ## CMakeLists.txt
 
@@ -259,12 +265,16 @@ endif() # <7>
 
 ## Back to your first tool
 
+::: {.incremental}
 1. Copy-paste `math-tools/common_tools/create_image/CMakeLists.txt` in the `double_log_pvalue` folder;
 2. Modify its content as needed.
 3. Compile your code!
+:::
 
+::: {.fragment}
 ::: {.callout-note}
 Anima handles most of the compilation settings for you. You only need to care about the specific *CMakeLists.txt* for your tool but, even there, most of the time, copy-pasting an already existing one will be enough.
+:::
 :::
 
 # Image Filters
@@ -279,24 +289,547 @@ Anima handles most of the compilation settings for you. You only need to care ab
 
 ![](images/anima-filters.png)
 
-## toto
+## Reuse reuse reuse reuse
 
-- GenerateOutputInformation
-- BeforeThreaded
-- DynamicThead
-- AfterThreaded
+```{zsh}
+#| eval: false
+#| echo: true
+#| code-line-numbers: "4|13"
+# Use a terminal to search for existing filters
+# based on the one you want to use.
 
-## Anima filter
+stamm-a@aymerics-mbp Anima % grep -r "animaMasked" *
+diffusion/dti/dti_estimator/animaDTIEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+diffusion/dti/flip_tensors/animaFlipTensorImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+diffusion/dti/dti_non_central_chi_estimator/animaDTINonCentralChiEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+diffusion/mcm_estimator/animaMCMEstimatorImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+math-tools/statistics/animaLocalPatchCovarianceDistanceImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+math-tools/statistics/animaLocalPatchMeanDistanceImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+math-tools/common/animaMaskedImageToImageFilter.hxx:#include "animaMaskedImageToImageFilter.h"
+math-tools/common/animaMaskedImageToImageFilter.h:#include "animaMaskedImageToImageFilter.hxx"
+math-tools/statistical_tests/animaCramersTestImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+math-tools/statistical_tests/nlmeans_patient_to_group_comparison/animaNLMeansPatientToGroupComparisonImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+math-tools/statistical_tests/patient_to_group_comparison/animaPatientToGroupComparisonImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/animaT1SERelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/gamma_mixture_t2_estimation/animaGammaMixtureT2RelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/gmm_t2_estimation/animaGMMT2RelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/animaT2EPGRelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/combined_relaxometry_estimation/animaCombinedRelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/multi_t2_estimation/animaMultiT2RelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/animaT1RelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+quantitative-mri/estimation/animaT2RelaxometryEstimationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+registration/resamplers/animaOrientedModelBaseResampleImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+segmentation/staple/animaMultiThreadedSTAPLEImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+segmentation/tissues_em_classification/animaTissuesEMClassificationImageFilter.h:#include <animaMaskedImageToImageFilter.h>
+```
 
-# Tuto
+## Anatomy of a filter - General
 
-## You do
+- An **image** filter is a C++ class templated over the type of input images and the type of output images;
 
-- find suitable location in Anima tree structure
-- create a folder with suitable name: `my_first_tool` (**snakecase convention**)
-- add `add_subdirectory(toto)` at the end of the `CMakeLists.txt` file in the folder where you created the `my_first_tool` folder;
-- inside `my_first_tool`, you will need to create and fill in 3 files:
+- It is made of two files:
 
-    - `animaMyFirstTool.cxx` (mind the naming convention). It will call the filter given a set of input arguments and perform what the tool is supposed to do. This is the piece of code that will actually create the binary `animaMyFirstTool` that will be made available for users upon compilation of the code;
-    - `animaMyFirstToolImageFilter.h`
-    - `animaMyFirstToolImageFilter.hxx`
+    - a `.h` header file containing method *declarations*;
+    - a `.hxx` file containing method *implementations*.
+
+- Naming convention is `animaToolNameImageFilter.h` and `animaToolNameImageFilter.hxx`.
+
+## Anatomy of a filter (.h file) {.smaller}
+
+```{Rcpp}
+#| echo: true
+#| eval: false
+#| code-line-numbers: "|14-16|21-23|32|74-85|89-90|"
+// Content of `math-tools/statistics/animaCramersTestImageFilter.h`
+
+#pragma once
+
+#include <iostream>
+#include <animaMaskedImageToImageFilter.h>
+#include <itkVectorImage.h>
+#include <itkImage.h>
+#include <vector>
+
+namespace anima
+{
+
+template <class PixelScalarType>
+class CramersTestImageFilter :
+        public anima::MaskedImageToImageFilter< itk::VectorImage <PixelScalarType, 3> , itk::Image <PixelScalarType, 3> >
+{
+public:
+
+    /** Standard class typedefs. */
+    using Self = CramersTestImageFilter<PixelScalarType>;
+    using TInputImage = itk::VectorImage <PixelScalarType, 3>;
+    using TOutputImage = itk::Image <PixelScalarType, 3>;
+    using Superclass = anima::MaskedImageToImageFilter< TInputImage, TOutputImage >;
+    using Pointer = itk::SmartPointer<Self>;
+    using ConstPointer = itk::SmartPointer<const Self>;
+
+    /** Method for creation through the object factory. */
+    itkNewMacro(Self);
+
+    /** Run-time type information (and related methods) */
+    itkTypeMacro(CramersTestImageFilter, MaskedImageToImageFilter);
+
+    /** Image typedef support */
+    using InputImageType = TInputImage;
+    using OutputImageType = TOutputImage;
+    using InputPixelType = typename InputImageType::PixelType;
+    using InputImagePointer = typename InputImageType::Pointer;
+    using OutputImagePointer = typename OutputImageType::Pointer;
+
+    /** Superclass typedefs. */
+    using MaskImageType = typename Superclass::MaskImageType;
+    using MaskImagePointer = typename MaskImageType::Pointer;
+    using OutputImageRegionType = typename Superclass::OutputImageRegionType;
+
+    /** Set the number of samples to build the distribution */
+    itkSetMacro(NbSamples, unsigned long int);
+    itkGetMacro(NbSamples, unsigned long int);
+
+    void SetFirstGroupIndexes(std::vector<unsigned int> &group)
+    {
+        m_FirstGroup.clear();
+        m_FirstGroupSize = group.size();
+
+        for (unsigned int i = 0;i < m_FirstGroupSize;++i)
+            m_FirstGroup.push_back(group[i]);
+    }
+
+    void SetSecondGroupIndexes(std::vector<unsigned int> &group)
+    {
+        m_SecondGroup.clear();
+        m_SecondGroupSize = group.size();
+
+        for (unsigned int i = 0;i < m_SecondGroupSize;++i)
+            m_SecondGroup.push_back(group[i]);
+    }
+
+    void AddOutlierMask(MaskImageType *mask)
+    {
+        m_OutlierMasks.push_back(mask);
+    }
+
+protected:
+    CramersTestImageFilter()
+        : Superclass()
+    {
+        m_NbSamples = 5000;
+        m_FirstGroup.clear();
+        m_SecondGroup.clear();
+        m_FirstGroupSize = 0;
+        m_SecondGroupSize = 0;
+
+        m_UseOutlierMasks = false;
+        m_OutlierMasks.clear();
+    }
+
+    virtual ~CramersTestImageFilter() {}
+
+    void BeforeThreadedGenerateData() ITK_OVERRIDE;
+    void DynamicThreadedGenerateData(const OutputImageRegionType &outputRegionForThread) ITK_OVERRIDE;
+
+    //! Bootstrap samples generator for group comparison
+    void GenerateBootStrapSamples();
+
+    //! Actually bootstraps a p-value from the computed distance matrix and group samples
+    double BootStrap(vnl_matrix <double> &groupDistMatrix, std::vector <double> &inlierWeights);
+
+    //! Computes the Cramers' statistic knowing the distance matrix and the two groups
+    double CramerStatistic(vnl_matrix <double> &grpDistMatrix, std::vector <double> &inlierWeights,
+                           unsigned int index);
+
+private:
+    ITK_DISALLOW_COPY_AND_ASSIGN(CramersTestImageFilter);
+
+    std::vector < unsigned int > m_FirstGroup, m_SecondGroup;
+    std::vector < std::vector < unsigned int > > m_SamplesFirstGroup, m_SamplesSecondGroup;
+
+    unsigned long int m_NbSamples;
+    unsigned int m_FirstGroupSize, m_SecondGroupSize;
+
+    std::vector <MaskImagePointer> m_OutlierMasks;
+    bool m_UseOutlierMasks;
+};
+
+} // end namespace anima
+
+#include "animaCramersTestImageFilter.hxx"
+```
+
+Modify public/protected functions & private attributes as needed to clarify your code.
+
+## Anatomy of a filter (.hxx file)
+
+```{Rcpp}
+#| echo: true
+#| eval: false
+#| code-line-numbers: "|21|47-59|"
+// Content of `math-tools/statistics/animaCramersTestImageFilter.hxx`
+
+#pragma once
+
+#include "animaCramersTestImageFilter.h"
+
+#include <itkImageRegionIterator.h>
+#include <itkImageRegionConstIterator.h>
+#include <itkTimeProbe.h>
+#include <itkProgressReporter.h>
+
+#include <cmath>
+#include <ctime>
+#include <random>
+namespace anima
+{
+
+template <class PixelScalarType>
+void
+CramersTestImageFilter<PixelScalarType>
+::BeforeThreadedGenerateData () // <1>
+{
+    Superclass::BeforeThreadedGenerateData();
+
+    this->GetOutput()->FillBuffer(0);
+
+    // Checking consistency of the data and parameters
+
+    unsigned int nbInputs = this->GetNumberOfIndexedInputs();
+    if (nbInputs <= 1)
+        itkExceptionMacro("Error: Not enough inputs available... Exiting...");
+
+    if ((m_FirstGroupSize + m_SecondGroupSize) != nbInputs)
+        itkExceptionMacro("Groups data not clearly wrong... Exiting...");
+
+    m_SamplesFirstGroup.clear();
+    m_SamplesSecondGroup.clear();
+
+    this->GenerateBootStrapSamples();
+
+    m_UseOutlierMasks = (m_OutlierMasks.size() == nbInputs);
+}
+
+template <class PixelScalarType>
+void
+CramersTestImageFilter<PixelScalarType>
+::DynamicThreadedGenerateData(const OutputImageRegionType &outputRegionForThread)
+{ // <2>
+    using InIteratorType = itk::ImageRegionConstIterator < TInputImage >;
+    using OutRegionIteratorType = itk::ImageRegionIterator < OutputImageType >;
+
+    using MaskRegionIteratorType = itk::ImageRegionIterator < MaskImageType >;
+
+    OutRegionIteratorType outIterator(this->GetOutput(), outputRegionForThread);
+    MaskRegionIteratorType maskIterator (this->GetComputationMask(), outputRegionForThread);
+
+    std::vector <InIteratorType> inIterators(this->GetNumberOfIndexedInputs());
+    for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+        inIterators[i] = InIteratorType(this->GetInput(i), outputRegionForThread);
+
+    std::vector <MaskRegionIteratorType> outlierMasksIterators(m_OutlierMasks.size());
+
+    if (m_UseOutlierMasks)
+    {
+        for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+            outlierMasksIterators[i] = MaskRegionIteratorType(m_OutlierMasks[i],outputRegionForThread);
+    }
+
+    std::vector < InputPixelType > firstGroupData(m_FirstGroupSize), secondGroupData(m_SecondGroupSize);
+    vnl_matrix <double> cramerDistMatrix(this->GetNumberOfIndexedInputs(),this->GetNumberOfIndexedInputs(),0.0);
+    std::vector <double> inlierProbabilities(this->GetNumberOfIndexedInputs(),1);
+    unsigned int vectorSize = this->GetInput(0)->GetNumberOfComponentsPerPixel();
+
+    while (!outIterator.IsAtEnd())
+    {
+        if (maskIterator.Get() == 0)
+        {
+            outIterator.Set(0.0);
+            ++outIterator;
+            ++maskIterator;
+
+            for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+                ++inIterators[i];
+
+            if (m_UseOutlierMasks)
+            {
+                for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+                    ++outlierMasksIterators[i];
+            }
+
+            continue;
+        }
+
+        // Voxel is in mask, so now let's go for it and compute the stats
+        for (unsigned int i = 0; i < m_FirstGroupSize;++i)
+        {
+            unsigned int indFirst = m_FirstGroup[i];
+            firstGroupData[i] = inIterators[indFirst].Get();
+        }
+
+        for (unsigned int i = 0; i < m_SecondGroupSize;++i)
+        {
+            unsigned int indSec = m_SecondGroup[i];
+            secondGroupData[i] = inIterators[indSec].Get();
+        }
+
+        // Now that data is grouped, compute the distance matrix
+        for (unsigned int i = 0; i < m_FirstGroupSize;++i)
+        {
+            for (unsigned int l = 0;l < m_SecondGroupSize;++l)
+            {
+                double dist = 0;
+                for (unsigned int j = 0;j < vectorSize;++j)
+                    dist += (firstGroupData[i][j] - secondGroupData[l][j]) * (firstGroupData[i][j] - secondGroupData[l][j]);
+
+                cramerDistMatrix(i,m_FirstGroupSize + l) = sqrt(dist);
+                cramerDistMatrix(m_FirstGroupSize + l,i) = cramerDistMatrix(i,m_FirstGroupSize + l);
+            }
+
+            for (unsigned int l = i+1;l < m_FirstGroupSize;++l)
+            {
+                double dist = 0;
+                for (unsigned int j = 0;j < vectorSize;++j)
+                    dist += (firstGroupData[i][j] - firstGroupData[l][j]) * (firstGroupData[i][j] - firstGroupData[l][j]);
+
+                cramerDistMatrix(i,l) = sqrt(dist);
+                cramerDistMatrix(l,i) = cramerDistMatrix(i,l);
+            }
+        }
+
+        for (unsigned int i = 0; i < m_SecondGroupSize;++i)
+        {
+            for (unsigned int l = i+1;l < m_SecondGroupSize;++l)
+            {
+                double dist = 0;
+                for (unsigned int j = 0;j < vectorSize;++j)
+                    dist += (secondGroupData[i][j] - secondGroupData[l][j]) * (secondGroupData[i][j] - secondGroupData[l][j]);
+
+                cramerDistMatrix(m_FirstGroupSize + i,m_FirstGroupSize + l) = sqrt(dist);
+                cramerDistMatrix(m_FirstGroupSize + l,m_FirstGroupSize + i) = cramerDistMatrix(m_FirstGroupSize + i,m_FirstGroupSize + l);
+            }
+        }
+
+        if (m_UseOutlierMasks)
+        {
+            for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+                inlierProbabilities[i] = (outlierMasksIterators[i].Get() == 0);
+        }
+
+        outIterator.Set(this->BootStrap(cramerDistMatrix,inlierProbabilities));
+
+        ++outIterator;
+        ++maskIterator;
+
+        for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+            ++inIterators[i];
+
+        if (m_UseOutlierMasks)
+        {
+            for (unsigned int i = 0;i < this->GetNumberOfIndexedInputs();++i)
+                ++outlierMasksIterators[i];
+        }
+
+        this->IncrementNumberOfProcessedPoints();
+    }
+}
+
+template <class PixelScalarType>
+void
+CramersTestImageFilter<PixelScalarType>
+::GenerateBootStrapSamples()
+{
+    m_SamplesFirstGroup.resize(m_NbSamples + 1);
+    m_SamplesSecondGroup.resize(m_NbSamples + 1);
+
+    m_SamplesFirstGroup[0] = m_FirstGroup;
+    m_SamplesSecondGroup[0] = m_SecondGroup;
+
+    unsigned int nbFirstGroup = m_FirstGroup.size();
+    unsigned int nbSecondGroup = m_SecondGroup.size();
+    unsigned int nbSubjects = nbFirstGroup + nbSecondGroup;
+
+    unsigned int minNbGroup = std::min(nbFirstGroup,nbSecondGroup);
+    bool isFirstGroupMin = (nbFirstGroup <= nbSecondGroup);
+
+    std::vector <unsigned int> sampleGen, sampleGenOtherGroup;
+    std::mt19937 generator(time(0));
+    std::uniform_real_distribution<double> unifDistr(0.0, 1.0);
+
+    for (unsigned int i = 1;i <= m_NbSamples;++i)
+    {
+        sampleGen.clear();
+        sampleGenOtherGroup.clear();
+
+        unsigned int j = 0;
+        while (j < minNbGroup)
+        {
+            int tmpVal = std::min((int)(nbSubjects - 1),(int)floor(unifDistr(generator) * nbSubjects));
+            if (tmpVal < 0)
+                tmpVal = 0;
+
+            bool isAlreadyIndexed = false;
+            for (unsigned int k = 0; k < j;++k)
+            {
+                if (tmpVal == sampleGen[k])
+                {
+                    isAlreadyIndexed = true;
+                    break;
+                }
+            }
+
+            if (!isAlreadyIndexed)
+            {
+                sampleGen.push_back(tmpVal);
+                j++;
+            }
+        }
+
+        // New sample gen that is not already here... Add it to the result vectors
+        for (unsigned int j = 0;j < nbSubjects;++j)
+        {
+            bool isAlreadyIndexed = false;
+            for (unsigned int k = 0;k < minNbGroup;++k)
+            {
+                if (j == sampleGen[k])
+                {
+                    isAlreadyIndexed = true;
+                    break;
+                }
+            }
+
+            if (!isAlreadyIndexed)
+                sampleGenOtherGroup.push_back(j);
+        }
+
+        if (isFirstGroupMin)
+        {
+            m_SamplesFirstGroup[i] = sampleGen;
+            m_SamplesSecondGroup[i] = sampleGenOtherGroup;
+        }
+        else
+        {
+            m_SamplesFirstGroup[i] = sampleGenOtherGroup;
+            m_SamplesSecondGroup[i] = sampleGen;
+        }
+    }
+}
+
+template <class PixelScalarType>
+double
+CramersTestImageFilter<PixelScalarType>
+::BootStrap(vnl_matrix <double> &groupDistMatrix, std::vector <double> &inlierWeights)
+{
+    // First index is the true group separation (see GenerateBootStrap)
+    double dataVal = this->CramerStatistic(groupDistMatrix,inlierWeights,0);
+
+    std::vector <double> statsValues(m_NbSamples,0);
+
+    for (unsigned long int i = 0;i < m_NbSamples;++i)
+        statsValues[i] = this->CramerStatistic(groupDistMatrix,inlierWeights,i+1);
+
+    std::sort(statsValues.begin(),statsValues.end());
+
+    if (dataVal >= statsValues[statsValues.size() - 1])
+        return 0;
+
+    unsigned int position = 0;
+
+    while(position < statsValues.size())
+    {
+        if (dataVal <= statsValues[position])
+            break;
+
+        ++position;
+    }
+
+    double resVal = 0;
+
+    if (position > 0)
+    {
+        resVal = m_NbSamples - position + (statsValues[position - 1] - dataVal) / (statsValues[position] - statsValues[position - 1]);
+        resVal /= m_NbSamples;
+    }
+    else
+    {
+        // Here statsValues[position - 1] doesn't exist, replacing with 0
+        resVal = m_NbSamples - position - dataVal / statsValues[position];
+        resVal /= m_NbSamples;
+    }
+
+    return resVal;
+}
+
+template <class PixelScalarType>
+double
+CramersTestImageFilter<PixelScalarType>
+::CramerStatistic(vnl_matrix <double> &grpDistMatrix, std::vector <double> &inlierWeights,
+                  unsigned int index)
+{
+    unsigned int nbFirstGroup = m_SamplesFirstGroup[index].size();
+    unsigned int nbSecondGroup = m_SamplesSecondGroup[index].size();
+
+    double firstTerm = 0, secondTerm = 0, thirdTerm = 0;
+    double Z1 = 0, Z2 = 0, Z3 = 0;
+
+    for (unsigned int i = 0; i < nbFirstGroup;++i)
+    {
+        unsigned int indFirst = m_SamplesFirstGroup[index][i];
+        for (unsigned int j = 0;j < nbSecondGroup;++j)
+        {
+            double alpha = inlierWeights[indFirst]*inlierWeights[m_SamplesSecondGroup[index][j]];
+            firstTerm += alpha*grpDistMatrix(indFirst,m_SamplesSecondGroup[index][j]);
+            Z1 += alpha;
+        }
+
+        for (unsigned int j = i+1;j < nbFirstGroup;++j)
+        {
+            double alpha = 0.5*inlierWeights[indFirst]*inlierWeights[m_SamplesFirstGroup[index][j]];
+            secondTerm += 2*alpha*grpDistMatrix(indFirst,m_SamplesFirstGroup[index][j]);
+            Z2 += 2*alpha;
+        }
+
+        // Don't forget to add the diagonal term for Z2
+        Z2 += inlierWeights[indFirst]*inlierWeights[m_SamplesFirstGroup[index][i]];
+    }
+
+    firstTerm /= Z1;
+    secondTerm /= (2*Z2);
+
+    for (unsigned int i = 0; i < nbSecondGroup;++i)
+    {
+        int indSec = m_SamplesSecondGroup[index][i];
+        for (unsigned int j = i+1;j < nbSecondGroup;++j)
+        {
+            double alpha = inlierWeights[indSec]*inlierWeights[m_SamplesSecondGroup[index][j]];
+            thirdTerm += 2*alpha*grpDistMatrix(indSec,m_SamplesSecondGroup[index][j]);
+            Z3 += 2*alpha;
+        }
+
+        // Don't forget to add the diagonal term for Z3
+        Z3 += inlierWeights[indSec]*inlierWeights[m_SamplesSecondGroup[index][i]];
+    }
+
+    thirdTerm /= (2*Z3);
+
+    return firstTerm - secondTerm - thirdTerm;
+}
+
+} // end namespace anima
+```
+1. This method is used to perform any computation that can be done once to pre-compute values that can be later used for computations in each voxel.
+2. This method is used by each worker to process the voxels that have been assigned to it. It receives the appropriate region for this purpose. Iterators are therfore instantiated *within* this method to cover the appropriate region.
+
+## Back again to our first tool {.smaller}
+
+1. Write an image filter to handle the p-value transformation;
+
+    - Write *animaDoubleLogPValueImageFilter.h*;
+    - Write *animaDoubleLogPValueImageFilter.hxx*;
+
+2. Modify *animaDoubleLogPValue.cxx* to call the filter instead of doing the computation directly in the *main()* function;
+3. Add an optional argument to the parser for setting the number of cores to parallelize over.
+
+::: {.callout-tip}
+Again, get inspiration from the existing code to understand how to modify the *main()* function. See for instance *animaCramersTest.cxx*.
+:::
