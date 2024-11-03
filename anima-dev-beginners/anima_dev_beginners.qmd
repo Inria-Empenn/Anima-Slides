@@ -1,0 +1,302 @@
+---
+title: "Anima"
+subtitle: "A C++ library with a set of Python scripts for medical image processing"
+author:
+  - name: A. Stamm
+    affiliation: Department of Mathematics Jean Leray, UMR CNRS 6629, Nantes University, Ecole Centrale de Nantes, France
+    corresponding: true
+    orcid: 0000-0002-8725-3654
+format:
+  revealjs:
+    footer: "Anima Hackathon #1 - Rennes - <aymeric.stamm@cnrs.fr>"
+    slide-number: true
+    logo: images/logo-lmjl.png
+    date: 2024-11-04
+    theme: simple
+    code-annotations: select
+    chalkboard: true
+date: 2024-11-04
+lightbox: auto
+engine: knitr
+bibliography: references.bib
+---
+
+# Developing code in [Anima](https://anima.irisa.fr)
+
+![](images/banner_anima.png)
+
+## Overview of tools in Anima
+
+![](images/anima-tree.png){.nostretch fig-align="center" width="750px"}
+
+## The `math-tools` module
+
+![](images/anima-math-tools-tree.png){.nostretch fig-align="center" width="800px"}
+
+## Your turn
+
+1. Fork the Anima-Public repository;
+2. Clone your fork of the Anima-Public repository:
+
+```{bash}
+#| echo: true
+#| eval: false
+# cd somewhere/Anima
+git clone https://github.com/astamm/Anima-Public src/
+```
+
+3. Create a branch for this tutorial:
+```{bash}
+#| echo: true
+#| eval: false
+cd src
+git checkout -b anima-tuto
+git push --set-upstream origin anima-tuto
+```
+
+# My first tool
+
+## Getting familiar with data IO
+
+```{Rcpp}
+#| eval: false
+#| echo: true
+#| code-line-numbers: "|13-32|3|34-35|7-8|44,56|11|46-54|60-74|76-87|9|92|"
+// Content of `math-tools/common_tools/convert_image/animaConvertImage.cxx`
+
+#include <tclap/CmdLine.h> // <2>
+#include <iostream>
+#include <string>
+
+#include <itkImage.h> // <4>
+#include <itkVectorImage.h>
+#include <itkImageRegionIterator.h> // <12>
+
+#include <animaReadWriteFunctions.h> // <6>
+
+int main(int argc, char **argv) // <1>
+{
+    TCLAP::CmdLine cmd("INRIA / IRISA - VisAGeS/Empenn Team", ' ',ANIMA_VERSION);
+
+    TCLAP::ValueArg<std::string> geomArg("g","geometryfile","Geometry image",true,"","Geometry image",cmd);
+    TCLAP::ValueArg<std::string> outArg("o","outputfile","output image",true,"","output image",cmd);
+    TCLAP::ValueArg<unsigned int> vdimArg("v","vdim","Force vdim to this value",false,1,"Force vdim",cmd);
+    TCLAP::ValueArg<unsigned int> valueArg("b","buffervalue","Value to fill buffer",false,0,"Value to fill buffer",cmd);
+
+    TCLAP::SwitchArg vecArg("V","isvec","Input image is a vector / tensor image",cmd,false);
+
+    try
+    {
+        cmd.parse(argc,argv);
+    }
+    catch (TCLAP::ArgException& e)
+    {
+        std::cerr << "Error: " << e.error() << "for argument " << e.argId() << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    using ImageType = itk::Image <double,3>; // <3>
+    using VectorImageType = itk::VectorImage <double,3>;
+
+    bool isVect = vecArg.isSet();
+    unsigned int fvdim = vdimArg.getValue();
+    if (fvdim > 1)
+        isVect = true;
+
+    if (!isVect)
+    { // <5>
+        ImageType::Pointer geomImage = anima::readImage <ImageType> (geomArg.getValue());
+
+        ImageType::Pointer resImage = ImageType::New(); // <7>
+        resImage->Initialize();
+        resImage->SetRegions(geomImage->GetLargestPossibleRegion());
+        resImage->SetSpacing(geomImage->GetSpacing());
+        resImage->SetOrigin(geomImage->GetOrigin());
+        resImage->SetDirection(geomImage->GetDirection());
+
+        resImage->Allocate();
+        resImage->FillBuffer(valueArg.getValue()); // <8>
+
+        anima::writeImage <ImageType> (outArg.getValue(),resImage);
+    }
+    else
+    { // <9>
+        VectorImageType::Pointer geomImage = anima::readImage <VectorImageType> (geomArg.getValue());
+
+        VectorImageType::Pointer resImage = VectorImageType::New();
+        resImage->Initialize();
+        resImage->SetRegions(geomImage->GetLargestPossibleRegion());
+        resImage->SetSpacing(geomImage->GetSpacing());
+        resImage->SetOrigin(geomImage->GetOrigin());
+        resImage->SetDirection(geomImage->GetDirection());
+
+        unsigned int vdim = geomImage->GetNumberOfComponentsPerPixel(); // <10>
+        if (fvdim > 1)
+            vdim = fvdim;
+
+        resImage->SetNumberOfComponentsPerPixel(vdim);
+        resImage->Allocate();
+
+        itk::VariableLengthVector <double> tmpData;
+        tmpData.SetSize(vdim);
+        for (unsigned int i = 0;i < vdim;++i)
+            tmpData[i] = valueArg.getValue();
+        // <11>
+        itk::ImageRegionIterator <VectorImageType> tmpIt(resImage,resImage->GetLargestPossibleRegion());
+
+        while(!tmpIt.IsAtEnd())
+        {
+            tmpIt.Set(tmpData);
+            ++tmpIt;
+        }
+
+        anima::writeImage <VectorImageType> (outArg.getValue(),resImage);
+    }
+
+    return EXIT_SUCCESS; // <13>
+}
+```
+1. User input arguments are captured by *argc* and *argv* and parsed by TCLAP using the **CmdLine** class. Arguments are declared by type (e.g. *ValueArg\<double\>* for a floating-point number, etc.). A variety of other [argument types](https://tclap.sourceforge.net/manual.html#FUNDAMENTAL_CLASSES) can be used.
+2. Use of the TCLAP API requires to include this header.
+3. Images are handled by ITK through dedicated classes. These classes are templated on the scalar value type in each voxel and the image dimension. Here we define shortcuts for 3-dimensional scalar and vector images of type *double*.
+4. The **itk::Image** and **itk::VectorImage** classes are defined in these headers which therefore have to be included.
+5. We read images in and write images out using *anima::readImage* and *anima::writeImage* respectively, which are templated on the type of image to handle. The reader expects a string describing the location of the image and outputs a pointer to the memory location where the input image is. The writer expects (i) a string describing the location to which the image should be savec and (ii) the pointer to the memory location where the output image is.
+6. We need to include this header to use *anima::readImage* and *anima::writeImage*.
+7. This code shows how to create an image from scratch using a reference image to copy its geometry. First, the pointer is created and initialized. Then regions, spacing, origin and direction informations are copied from the reference image. Finally, the image is allocated in memory and filled with the desired value.
+8. User arguments that have been parsed can be accessed via the *.getValue()* method for the **ValueArg** class and via the *.isSet()* method for the **SwitchArg** class.
+9. To create a vector image, the code is pretty much the same expect that we use the *VectorImageType* image type.
+10. The only subtlety is that now each voxel contains a vector-valued entry which is of type *itk::VariableLengthVector*. Its length can be retrieved from the reference image via the *GetNumberOfComponentsPerPixel()`.
+11. For vector images, there is no *FillBuffer()* method. Instead, one declares an iterator over the whole region of the image and set its value via the *Set()* method at each iterator increment until reaching the end of the image region.
+12. Iterators over images are ITK classes that are found in specific headers that need to be included.
+13. Exit your main program with the *EXIT_SUCCESS* macro if it runs smoothly up to the end.
+
+## Your turn
+
+1. Copy-paste the previous code in a file that you call `animaDoubleLogPValue.cxx`;
+2. Modify the code in order to receive as input a 3-dimensional scalar image of p-values and return the image with the double logarithm transform of the p-value in it. We recall that this transformation is $\log \left( - \log(p) \right)$;
+3. Add an optional argument to provide a mask image so that the transformation is applied only on those voxels for which the mask is set to 1.
+
+::: {.callout-tip}
+Get inspiration (copy-paste) existing code and modify the minimum to suit your needs!
+:::
+
+## How to compile this code?
+
+1. Decide where your tool will end up in the current anima source code tree;
+2. Go there and create a dedicated folder with the name of the tool **without the anima prefix** and using **snake_case** formatting (e.g. `double_log_pvalue`);
+3. At this same location, edit the `CMakeLists.txt` file by adding `add_subdirectory(double_log_pvalue)`. This tells `cmake` to add the subdirectory for compilation;
+4. Put the file you wrote (`animaDoubleLogPValue.cxx`) in the `double_log_pvalue` folder.
+
+## CMakeLists.txt
+
+Now compile your code.
+
+::: {.fragment}
+::: {.callout-caution}
+If you try to compile this code, it will not work because your tool is missing its own *CMakeLists.txt* file to give instructions to **cmake** on how to compile our tool (i.e. which libraries should it link with, which headers, etc.).
+
+Do I have to learn **cmake** as well?
+:::
+:::
+
+::: {.fragment}
+::: {.callout-tip}
+As usual, let us adopt the minimum effort strategy and see if the existing *CMakeLists.txt* for *animaCreateImage* could fit our needs.
+:::
+:::
+
+## Reuse existing code
+
+```{bash}
+#| eval: false
+#| echo: true
+#| code-line-numbers: "|3|5|7-13|15-21|23-29|31-35|37|"
+# Context of `math-tools/common_tools/create_image/CMakeLists.txt`
+
+if(BUILD_TOOLS) # <1>
+
+project(animaCreateImage) # <2>
+
+## #############################################################################
+## List Sources # <3>
+## #############################################################################
+
+list_source_files(${PROJECT_NAME}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
+## #############################################################################
+## add executable # <4>
+## #############################################################################
+
+add_executable(${PROJECT_NAME}
+  ${${PROJECT_NAME}_CFILES}
+  )
+
+## #############################################################################
+## Link # <5>
+## #############################################################################
+
+target_link_libraries(${PROJECT_NAME}
+  ${ITKIO_LIBRARIES}
+  )
+
+## #############################################################################
+## install # <6>
+## #############################################################################
+
+set_exe_install_rules(${PROJECT_NAME})
+
+endif() # <7>
+```
+1. The *if* statement checks if the BUILD_TOOLS flag has been set during project configuration via **cmake** and only compiles this tool if it is the case.
+2. This line gives the name of the binary that will be compiled. **You need to modify it for your own needs.**
+3. This part has the necessary code to list sources.
+4. This part has the necessary code to add the executable to the list of executables to be compiled.
+5. This part has the necessary code to tell the compiler which libraries it should link to. You *might need to modify* it for your own needs. Check which headers you include in your code to get it right. Most of the time linking with ${ITKIO_LIBRARIES} will be enough.
+6. This part has the necessary code to install the binary.
+7. Mind the *endif()* line at the end of the file to close the statement.
+
+## Back to your first tool
+
+1. Copy-paste `math-tools/common_tools/create_image/CMakeLists.txt` in the `double_log_pvalue` folder;
+2. Modify its content as needed.
+3. Compile your code!
+
+::: {.callout-note}
+Anima handles most of the compilation settings for you. You only need to care about the specific *CMakeLists.txt* for your tool but, even there, most of the time, copy-pasting an already existing one will be enough.
+:::
+
+# Image Filters
+
+- A good way of writing clean code by organizing the code that handles the computation in each voxel repeatedly in separate files, out from your `main()` function;
+- Anima image filters build upon ITK image filters and therefore come with the same benefits such as **multi-threading** (automatic parallel processing).
+
+## From ITK to Anima filters {.center .smaller}
+
+- ITK filters transform one or several input images into one or several output images;
+- They feature many advantages such as multi-threading.
+
+![](images/anima-filters.png)
+
+## toto
+
+- GenerateOutputInformation
+- BeforeThreaded
+- DynamicThead
+- AfterThreaded
+
+## Anima filter
+
+# Tuto
+
+## You do
+
+- find suitable location in Anima tree structure
+- create a folder with suitable name: `my_first_tool` (**snakecase convention**)
+- add `add_subdirectory(toto)` at the end of the `CMakeLists.txt` file in the folder where you created the `my_first_tool` folder;
+- inside `my_first_tool`, you will need to create and fill in 3 files:
+
+    - `animaMyFirstTool.cxx` (mind the naming convention). It will call the filter given a set of input arguments and perform what the tool is supposed to do. This is the piece of code that will actually create the binary `animaMyFirstTool` that will be made available for users upon compilation of the code;
+    - `animaMyFirstToolImageFilter.h`
+    - `animaMyFirstToolImageFilter.hxx`
