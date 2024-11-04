@@ -24,11 +24,15 @@ engine: knitr
 
 ![](images/banner_anima.png)
 
+## Anima Dependencies^[<https://itk.org/Doxygen/html/modules.html>] {.smaller}
+
+![](images/anima-dependencies.png){.nostretch fig-align="center" width="850px"}
+
 ## Overview of tools in Anima
 
 ![](images/anima-tree.png){.nostretch fig-align="center" width="750px"}
 
-## The `math-tools` module
+## The *math-tools* module
 
 ![](images/anima-math-tools-tree.png){.nostretch fig-align="center" width="800px"}
 
@@ -339,7 +343,7 @@ segmentation/tissues_em_classification/animaTissuesEMClassificationImageFilter.h
 ```{Rcpp}
 #| echo: true
 #| eval: false
-#| code-line-numbers: "|14-16|21-23|32|74-85|89-90|"
+#| code-line-numbers: "|14-16|21-23|32|74|87|89-90|103|117|"
 // Content of `math-tools/statistics/animaCramersTestImageFilter.h`
 
 #pragma once
