@@ -32,8 +32,8 @@
 *.app
 
 # Quarto-generated
-*_files
-*.html
+#*_files
+#*.html
 
 # macOS-specific garbage
 *.DS_Store
