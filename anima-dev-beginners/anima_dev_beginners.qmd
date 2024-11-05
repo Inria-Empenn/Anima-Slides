@@ -65,7 +65,7 @@ git push --set-upstream origin anima-tuto
 #| eval: false
 #| echo: true
 #| code-line-numbers: "|13-32|3|34-35|7-8|44,56|11|46-54|60-74|76-87|9|92|"
-// Content of `math-tools/common_tools/convert_image/animaConvertImage.cxx`
+// Content of `math-tools/common_tools/convert_image/animaCreateImage.cxx`
 
 #include <tclap/CmdLine.h> // <2>
 #include <iostream>
