@@ -14,7 +14,8 @@ format:
     date: 2024-11-04
     theme: simple
     code-annotations: select
-    chalkboard: true
+    chalkboard: false
+    self-contained: true
 date: 2024-11-04
 lightbox: auto
 engine: knitr
